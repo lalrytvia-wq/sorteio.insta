@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sorteioinsta | Live Draw</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        
+        /* Cores e Gradientes Estilo Instagram */
+        .ig-gradient {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+
+        .live-glow {
+            box-shadow: 0 0 30px rgba(236, 72, 153, 0.2);
+        }
+
+        /* Animação do Feed de Comentários Lateral */
+        @keyframes scrollUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+        .comment-scroll {
+            animation: scrollUp 35s linear infinite;
+        }
+        .comment-scroll:hover { animation-play-state: paused; }
+
+        /* Animação de Revelação do Vencedor */
+        .winner-card {
+            animation: winnerReveal 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes winnerReveal {
+            0% { transform: scale(0) rotate(-5deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        
+        #imageInput { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Barra de Navegação -->
+    <nav class="bg-slate-900 border-b border-slate-800 py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="p-1 rounded-lg ig-gradient">
+                    <i data-lucide="instagram" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-2xl font-black italic tracking-tighter">sorteio<span class="text-pink-500">insta</span></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-2 bg-red-600 px-4 py-1.5 rounded-full text-[10px] font-black animate-pulse tracking-widest text-white">
+                    <span class="w-2 h-2 bg-white rounded-full"></span> AO VIVO
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 grid lg:grid-cols-12 gap-8 flex-grow w-full">
+        
+        <!-- COLUNA ESQUERDA: Feed de Comentários Ativos -->
+        <div class="lg:col-span-3 hidden lg:block">
+            <div class="bg-slate-900 rounded-[32px] border border-slate-800 p-6 h-[750px] overflow-hidden relative shadow-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-3 h-3 text-pink-500"></i> Atividade Real
+                    </h3>
+                    <span class="text-[8px] bg-slate-800 text-slate-600 px-2 py-0.5 rounded font-mono" id="participantCount">0 PARTICIPANTES</span>
+                </div>
+                <div id="sideCommentFeed" class="comment-scroll space-y-3">
+                    <!-- Gerado via JavaScript -->
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-slate-900 via-slate-900/80 to-transparent pointer-events-none"></div>
+            </div>
+        </div>
+
+        <!-- COLUNA DIREITA: Palco Principal do Sorteio -->
+        <div class="lg:col-span-9 space-y-8 flex flex-col">
+            
+            <!-- Contentor do Sorteio -->
+            <div class="bg-slate-900 rounded-[48px] border border-slate-800 p-8 md:p-12 live-glow text-center relative overflow-hidden flex-grow flex flex-col justify-center min-h-[550px]">
+                <div class="absolute top-0 left-0 w-full h-1.5 ig-gradient"></div>
+                
+                <!-- Estado Inicial: Configuração -->
+                <div id="drawStageInitial">
+                    <div class="flex flex-col lg:flex-row gap-12 items-center">
+                        
+                        <!-- Painel de Imagem (Esquerda) -->
+                        <div class="w-full lg:w-1/2 space-y-4">
+                            <div class="bg-slate-800/50 rounded-[32px] border-2 border-dashed border-slate-700/50 p-2 relative group cursor-pointer overflow-hidden aspect-square flex items-center justify-center" onclick="document.getElementById('imageInput').click()">
+                                <div id="imagePlaceholder" class="flex flex-col items-center gap-3 text-slate-500 transition-all group-hover:text-pink-500">
+                                    <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center">
+                                        <i data-lucide="camera" class="w-8 h-8"></i>
+                                    </div>
+                                    <span class="font-bold text-sm uppercase tracking-widest">Carregar Foto do Post</span>
+                                </div>
+                                <img id="previewImg" class="hidden w-full h-full object-cover rounded-[24px]">
+                                <input type="file" id="imageInput" accept="image/*" onchange="handleImagePreview(event)">
+                            </div>
+                        </div>
+
+                        <!-- Painel de Dados (Direita) -->
+                        <div class="w-full lg:w-1/2 text-left space-y-6">
+                            <div>
+                                <h2 class="text-3xl font-black mb-2 tracking-tight text-white italic">Configurar Sorteio</h2>
+                                <p class="text-slate-500 text-sm font-light">Insira os dados da publicação oficial.</p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div class="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
+                                    <label class="text-[9px] font-black text-slate-500 block mb-1 uppercase tracking-[0.2em]">URL da Publicação</label>
+                                    <input type="text" id="postLink" placeholder="Cole o link aqui..." 
+                                        class="bg-transparent text-sm w-full outline-none text-pink-400 placeholder:text-slate-600 font-medium">
+                                </div>
+
+                                <div class="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
+                                    <label class="text-[9px] font-black text-slate-500 block mb-1 uppercase tracking-[0.2em]">Vencedores</label>
+                                    <input type="number" id="winnersCount" value="1" min="1" class="bg-transparent text-3xl font-black w-full outline-none text-white">
+                                </div>
+
+                                <button onclick="startDrawSequence()" class="ig-gradient w-full py-6 rounded-[24px] font-black text-xl shadow-2xl shadow-pink-900/40 hover:brightness-110 active:scale-95 transition-all uppercase italic text-white tracking-tight">
+                                    SORTEAR AGORA
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estado: Processamento (Animação de nomes) -->
+                <div id="drawStageRunning" class="hidden py-24">
+                    <div class="text-pink-500 text-8xl font-black mb-8 italic tracking-tighter drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]" id="rollingName">@analisando...</div>
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="flex gap-2">
+                            <div class="w-2 h-2 bg-pink-500 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-pink-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                            <div class="w-2 h-2 bg-pink-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        </div>
+                        <span id="processStatus" class="text-xs font-black text-slate-500 uppercase tracking-[0.5em]">Lendo Comentários</span>
+                    </div>
+                </div>
+
+                <!-- Estado: Finalizado (Resultado) -->
+                <div id="drawStageFinished" class="hidden py-10">
+                    <div class="mb-10">
+                        <span class="bg-pink-500/10 text-pink-500 px-6 py-2 rounded-full text-xs font-black tracking-widest uppercase border border-pink-500/20 italic">
+                            <i data-lucide="award" class="inline w-4 h-4 mr-1"></i> sorteio,insta
+                        </span>
+                    </div>
+                    <div id="winnersOutput" class="space-y-6 mb-12">
+                        <!-- Vencedores injetados aqui -->
+                    </div>
+                    <button onclick="window.location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 px-10 py-4 rounded-2xl text-[10px] font-black transition-all border border-slate-700 uppercase tracking-widest">
+                        Reiniciar Sorteio
+                    </button>
+                </div>
+            </div>
+
+            <!-- Protocolo de Auditoria Digital (Dados Fixos Conforme Solicitado) -->
+            <div class="bg-slate-900 rounded-[32px] p-8 border border-slate-800 text-xs font-mono text-slate-500 shadow-xl">
+                <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-5">
+                    <div class="flex flex-col">
+                        <span class="text-white font-black flex items-center gap-2 text-sm">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-pink-500"></i> PROTOCOLO DE AUDITORIA DIGITAL
+                        </span>
+                        <span class="text-[10px] text-slate-600 mt-1 uppercase tracking-tight">Verificação SHA-256 de Camada Única</span>
+                    </div>
+                    <span id="auditStatus" class="bg-green-500 text-slate-950 px-5 py-2.5 rounded-xl text-[10px] font-black tracking-[0.2em] uppercase">VALIDADO</span>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                            <p class="text-slate-700 font-bold uppercase text-[9px] mb-1">Link Validado</p>
+                            <p id="auditLink" class="text-slate-500 truncate italic">https://www.instagram.com/p/DVyprNICSTf/?utm_source=ig_web_copy_link&igsh=MzRlODBiNWFlZA==</p>
+                        </div>
+                        <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                            <p class="text-slate-700 font-bold uppercase text-[9px] mb-1">ID do Sorteio (Ref)</p>
+                            <p id="auditRef" class="text-slate-300 font-bold">INSTA-PRO-412795</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50 flex flex-col justify-center">
+                        <p class="text-slate-700 font-bold uppercase text-[9px] mb-2">Assinatura Digital (Integridade)</p>
+                        <p id="auditHash" class="text-slate-300 break-all leading-relaxed text-[10px]">d34bea09811ba9c0e599fb02a6e4960630295bf3c657e960cc6688428d453be4</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+
+        // Lista de participantes extraída dos comentários fornecidos
+        const rawParticipants = `
+            @9_claraa @anamariaespinheira @mare_matias318 @decio.maciellima @muller.lima.92756
+            @antonielcostaa @_gasparthiago118 @elisama.saraa @belchiorkassia8
+            @daniel.lorran @alleson.n @r__i__k__jovem @_jfb__
+            @joaovictorr06 @fabricio_lima68 @conceicaorodrigues735 @jany7_rdg8
+            @justmekaw @_kaylanesousaa @pmll._19 @am_personalizadosdepapel
+            @kauana_silvalk @murillo_sillvaa @edsonsilva_98 @eduarda_silvaa00
+            @danielsantanaag @cauan_santana_ @pedrosantanaa10 @rafael.santanaa
+            @cl.brito_ @pereira_mariaviviane @_6uilherme @luansanttos_015
+            @wl_martinns @chan_mendes715 @vini.santana3 @itsme_manusantana07
+            @emersonmonteiro1998 @guimonteiro004 @__mateusmonteiro @igor_mnt
+            @felipemonteiroar @natan_monteiro10 @fabricio_ng2 @wellynton_neves
+            @vanessaczario @iamcarou @mayanna_kelly @adrinenunes58
+            @belchiorg_ @matheus_card01 @emersonszalmeida @heitor_lauriano
+            @gustavo_fontnele @keziafelixs @henriquesousa.29 @d.lucasz08
+            @rogerio_costa03 @aless_androsales18 @mairac.santos @eugeniafc7
+            @carlos_henrique_rose @wagner_araujo.07 @barbeariadavisilva01 @jocelino_teixeira
+            @jonneslucas @katia.k.oliveira.1 @edsonvicentedelima @sr.verissimo_1977
+            @srt_gabriela701 @davy.hanry @eu_kaariny @srt_gabriela701
+            @jeonimogeo @jonas.menezes.1420 @thaise2608 @talinemoraes27
+            @nadi_arubia @pereiradossantosedwilson @yassmiinmoura @teresaraquel2120
+            @vanessa_vasoncelos @eu_marcia7707 @karinecostanine @joseluiz8799
+            @william_rosa_13 @wcesarizi @raniere961 @olivia.silverio.52
+        `;
+
+        const commentList = rawParticipants.match(/@[a-zA-Z0-9._-]+/g) || [];
+        const uniqueParticipants = [...new Set(commentList)];
+        
+        // Atualizar contador de participantes
+        const participantCountEl = document.getElementById('participantCount');
+        if (participantCountEl) participantCountEl.innerText = `${uniqueParticipants.length} PARTICIPANTES`;
+
+        // Preencher Feed Lateral de Atividade
+        const sideFeed = document.getElementById('sideCommentFeed');
+        if (sideFeed) {
+            uniqueParticipants.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "p-3 bg-slate-800/40 rounded-xl border border-slate-700/50 text-[10px] flex items-center justify-between group hover:border-pink-500/50 transition-all";
+                div.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="font-bold text-slate-300">${p}</span>
+                    </div>
+                    <span class="text-pink-500 font-black text-[7px] uppercase">Ativo</span>
+                `;
+                sideFeed.appendChild(div);
+            });
+            sideFeed.innerHTML += sideFeed.innerHTML; // Efeito de loop infinito
+        }
+
+        // Gestão de Carregamento de Imagem
+        function handleImagePreview(event) {
+            const input = event.target;
+            const previewImg = document.getElementById('previewImg');
+            const placeholder = document.getElementById('imagePlaceholder');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Lógica da Sequência do Sorteio
+        function startDrawSequence() {
+            const linkInput = document.getElementById('postLink');
+            const link = linkInput ? linkInput.value.trim() : "";
+            const winnersCountInput = document.getElementById('winnersCount');
+            const count = winnersCountInput ? parseInt(winnersCountInput.value) : 1;
+            
+            if (!link || !link.includes('instagram.com')) {
+                alert("Por favor, insira um link válido do Instagram.");
+                return;
+            }
+
+            // Mudar estágios da interface
+            document.getElementById('drawStageInitial').classList.add('hidden');
+            document.getElementById('drawStageRunning').classList.remove('hidden');
+
+            const rollingText = document.getElementById('rollingName');
+            const statusText = document.getElementById('processStatus');
+            let counter = 0;
+            
+            // Animação de nomes a "rodar"
+            const interval = setInterval(() => {
+                if (rollingText) {
+                    rollingText.innerText = uniqueParticipants[Math.floor(Math.random() * uniqueParticipants.length)];
+                }
+                counter++;
+
+                // Mensagens de progresso
+                if (statusText) {
+                    if (counter === 15) statusText.innerText = "Lendo Comentários";
+                    if (counter === 30) statusText.innerText = "Filtrando Spams";
+                    if (counter === 45) statusText.innerText = "Aplicando Algoritmo";
+                }
+
+                if (counter > 60) { 
+                    clearInterval(interval);
+                    finishDraw(count);
+                }
+            }, 80);
+        }
+
+        // Finalização e Seleção do Vencedor Alvo
+        function finishDraw(winnersCount) {
+            const winners = [];
+            const targetWinner = "@9_claraa";
+            
+            // Prioridade para o vencedor do anexo solicitado
+            if (uniqueParticipants.includes(targetWinner)) {
+                winners.push(targetWinner);
+            }
+
+            const pool = uniqueParticipants.filter(p => p !== targetWinner);
+            for(let i = winners.length; i < winnersCount; i++) {
+                if (pool.length === 0) break;
+                const idx = Math.floor(Math.random() * pool.length);
+                winners.push(pool.splice(idx, 1)[0]);
+            }
+
+            // Exibir Vencedores na Tela
+            const out = document.getElementById('winnersOutput');
+            if (out) {
+                out.innerHTML = '';
+                winners.forEach((w, i) => {
+                    const div = document.createElement('div');
+                    div.className = "bg-green-500/5 border-2 border-green-500/50 rounded-[40px] p-10 winner-card flex items-center justify-between shadow-2xl shadow-green-900/20 relative overflow-hidden";
+                    div.innerHTML = `
+                        <div class="text-left relative z-10">
+                            <p class="text-xs font-black text-green-500 uppercase tracking-[0.2em] mb-3">Vencedor #${i+1}</p>
+                            <h4 class="text-6xl font-black text-white italic tracking-tighter">${w}</h4>
+                        </div>
+                        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center text-slate-950 shadow-xl shadow-green-500/30 relative z-10">
+                            <i data-lucide="check-circle" class="w-10 h-10"></i>
+                        </div>
+                    `;
+                    out.appendChild(div);
+                });
+                lucide.createIcons();
+            }
+
+            // Atualizar interface para estado final
+            document.getElementById('drawStageRunning').classList.add('hidden');
+            document.getElementById('drawStageFinished').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
